@@ -90,7 +90,7 @@ def search(path, expression):
             continue
         path_list[-1] = path_list[-1][:-3]
         # print '** ', path_list
-        for pos in xrange(len(path_list)):
+        for pos in xrange(len(path_list)-1, -1, -1):
             
             _path = os.path.sep.join(path_list[0:pos+1])
             _real_module = '.'.join(path_list[pos+1:])
@@ -98,20 +98,22 @@ def search(path, expression):
                 _path = os.path.sep
             if _real_module == '' or _real_module is None:
                 continue
-            # print '## path: {}, module: {}'.format(_path, _real_module)
+            print '## path: {}, module: {}'.format(_path, _real_module)
             try:
+                if _real_module in sys.modules:
+                    del sys.modules[_real_module] 
                 sys.path.insert(0, _path)
                 __import__(_real_module)
+                break
             except ImportError as e:
-                print e
-                pass
+                raise e
             except Exception as e:
-                print e
+                raise e
             finally:
                 sys.path.remove(_path)
-
+        
         # print '--module: ', module, os.getcwdu(), abs_dir, file_name, module_name, expression, path_list
         # foo = imp.load_source('foo', module)
-
+    print common.TESTS
     # print  '--lala: ', filter_tests(common.TESTS, expression)
     return filter_tests(common.TESTS, expression)
