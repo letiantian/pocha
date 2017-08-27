@@ -5,6 +5,7 @@ testing hierarchy as represented by the underlying tests.
 """
 import os
 import imp
+import sys
 
 from collections import OrderedDict
 
@@ -78,6 +79,39 @@ def search(path, expression):
     # load each module and then we'll have a complete list of the tests
     # to run
     for module in modules:
-        imp.load_source('foo', module)
-    
+        cur_dir = os.getcwdu()
+        module = module.replace('/', os.path.sep).replace('\\', os.path.sep)
+        abs_path = os.path.abspath(os.path.join(cur_dir, module)).replace('/', os.path.sep).replace('\\', os.path.sep)
+        abs_dir = os.path.dirname(abs_path)
+        file_name = os.path.basename(abs_path)
+        module_name = file_name.replace('.py', '').replace('.pyc', '').replace('.pyo', '')
+        path_list = abs_path.split(os.path.sep)
+        if len(path_list) < 1 or not path_list[-1].endswith('.py') or len(path_list[-1]) < 4:
+            continue
+        path_list[-1] = path_list[-1][:-3]
+        # print '** ', path_list
+        for pos in xrange(len(path_list)):
+            
+            _path = os.path.sep.join(path_list[0:pos+1])
+            _real_module = '.'.join(path_list[pos+1:])
+            if _path == '' or _path is None:
+                _path = os.path.sep
+            if _real_module == '' or _real_module is None:
+                continue
+            # print '## path: {}, module: {}'.format(_path, _real_module)
+            try:
+                sys.path.insert(0, _path)
+                __import__(_real_module)
+            except ImportError as e:
+                print e
+                pass
+            except Exception as e:
+                print e
+            finally:
+                sys.path.remove(_path)
+
+        # print '--module: ', module, os.getcwdu(), abs_dir, file_name, module_name, expression, path_list
+        # foo = imp.load_source('foo', module)
+
+    # print  '--lala: ', filter_tests(common.TESTS, expression)
     return filter_tests(common.TESTS, expression)
